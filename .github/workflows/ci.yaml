@@ -29,7 +29,6 @@ jobs:
         run: echo "test pass for now .... "
 
       - name: Check Conventional Commit messages
-        if: github.event_name == 'pull_request'
         run: |
           echo "Validating commit messages..."
           NON_CONFORMING=$(git log origin/${{ github.base_ref }}..HEAD --pretty=format:"%s" | grep -Ev '^(feat|fix|chore|docs|style|refactor|perf|test|build|ci|revert)(\(.+\))?: .+')
