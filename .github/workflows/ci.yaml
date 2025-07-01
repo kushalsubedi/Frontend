@@ -28,7 +28,8 @@ jobs:
 
       - name: Get short SHA
         id: vars
-        run: echo "sha3=${GITHUB_SHA::3}" >> $GITHUB_OUTPUT
+        run: echo "sha3=$(echo $GITHUB_SHA | cut -c1-3)" >> $GITHUB_OUTPUT
+
 
       - name: Set environment name
         id: envname
@@ -49,7 +50,9 @@ jobs:
           fi
 
       - name: Print Environment
-        run: echo "Using environment: ${{ steps.envname.outputs.env }}"
+        run: echo "Using environment: $ENVIRONMENT"
+        env:
+          ENVIRONMENT: ${{ steps.envname.outputs.env }}
 
       - name: Build and push Docker image
         uses: docker/build-push-action@v5
