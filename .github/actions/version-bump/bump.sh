@@ -1,7 +1,6 @@
 #!/bin/bash
 set -e
 
-# Set $GITHUB_OUTPUT to a temp file if unset (for local testing)
 if [ -z "$GITHUB_OUTPUT" ]; then
   export GITHUB_OUTPUT="/tmp/github_output.txt"
   echo "Running locally, writing outputs to $GITHUB_OUTPUT"

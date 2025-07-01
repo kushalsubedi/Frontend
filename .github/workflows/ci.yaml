@@ -1,4 +1,4 @@
-name: Docker Build & Push
+name: CI/CD - Docker Build & Push
 
 on:
   push:
@@ -10,45 +10,54 @@ on:
       - dev
 
 jobs:
-  docker-build-and-push:
+  test-and-validate:
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Fetch full Git history (for tags)
-        run: git fetch --tags --prune --unshallow || true
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
 
-      - name: Bump version based on commit
-        id: bump
-        uses: ./.github/actions/version-bump
+      - name: Install dependencies
+        run: npm ci
 
-      - name: Create prefixed tag
-        id: prefixed-tag
+      - name: Run React tests
+        run: npm test -- --watchAll=false
+
+      - name: Check Conventional Commit messages
+        if: github.event_name == 'pull_request'
         run: |
-          if [[ "${GITHUB_REF}" == "refs/heads/main" ]]; then
-            prefix="prod-"
-          else
-            prefix="dev-"
+          echo "Validating commit messages..."
+          NON_CONFORMING=$(git log origin/${{ github.base_ref }}..HEAD --pretty=format:"%s" | grep -Ev '^(feat|fix|chore|docs|style|refactor|perf|test|build|ci|revert)(\(.+\))?: .+')
+          if [ -n "$NON_CONFORMING" ]; then
+            echo "❌ The following commit messages do not follow Conventional Commits:"
+            echo "$NON_CONFORMING"
+            exit 1
           fi
-          raw_tag="${{ steps.bump.outputs.new_tag }}"
-          full_tag="${prefix}${raw_tag}"
-          echo "full_tag=$full_tag" >> $GITHUB_OUTPUT
 
-      - name: Debug version tag
-        run: echo "Tag is ${{ steps.prefixed-tag.outputs.full_tag }}"
+  docker-build-and-push:
+    needs: test-and-validate
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
 
       - name: Set up Docker Buildx
-        if: steps.bump.outputs.skip != 'true'
         uses: docker/setup-buildx-action@v3
 
       - name: Log in to DockerHub
-        if: steps.bump.outputs.skip != 'true'
         uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKER_HUB_USERNAME }}
           password: ${{ secrets.DOCKER_HUB_PAT }}
+
+      - name: Get short SHA
+        id: vars
+        run: echo "sha3=$(echo $GITHUB_SHA | cut -c1-3)" >> $GITHUB_OUTPUT
 
       - name: Set environment name
         id: envname
@@ -59,23 +68,24 @@ jobs:
             echo "env=development" >> $GITHUB_OUTPUT
           fi
 
+      - name: Applying Docker tags
+        id: tags
+        run: |
+          if [[ "${GITHUB_REF}" == "refs/heads/main" ]]; then
+            echo "tag=prodv${{ steps.vars.outputs.sha3 }}" >> $GITHUB_OUTPUT
+          else
+            echo "tag=dev${{ steps.vars.outputs.sha3 }}" >> $GITHUB_OUTPUT
+          fi
+
       - name: Print Environment
         run: echo "Using environment $ENVIRONMENT"
         env:
           ENVIRONMENT: ${{ steps.envname.outputs.env }}
 
       - name: Build and push Docker image
-        if: steps.bump.outputs.skip != 'true'
         uses: docker/build-push-action@v5
         with:
           context: .
           push: true
-          tags: ${{ secrets.DOCKER_HUB_USERNAME }}/frontend:${{ steps.prefixed-tag.outputs.full_tag }}
+          tags: ${{ secrets.DOCKER_HUB_USERNAME }}/frontend:${{ steps.tags.outputs.tag }}
 
-      - name: Tag and push Git tag
-        if: steps.bump.outputs.skip != 'true'
-        run: |
-          git config user.name "github-actions"
-          git config user.email "actions@github.com"
-          git tag ${{ steps.prefixed-tag.outputs.full_tag }}
-          git push origin ${{ steps.prefixed-tag.outputs.full_tag }}
