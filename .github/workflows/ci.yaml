@@ -33,7 +33,7 @@ jobs:
           echo "Validating commit messages..."
           NON_CONFORMING=$(git log origin/${{ github.base_ref }}..HEAD --pretty=format:"%s" | grep -Ev '^(feat|fix|chore|docs|style|refactor|perf|test|build|ci|revert)(\(.+\))?: .+')
           if [ -n "$NON_CONFORMING" ]; then
-            echo "❌ The following commit messages do not follow Conventional Commits:"
+            echo "failed ❌ The following commit messages do not follow Conventional Commits:"
             echo "$NON_CONFORMING"
             exit 1
           fi
