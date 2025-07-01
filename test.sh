@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-# Set $GITHUB_OUTPUT to a temp file if unset (for local testing)
+# Local test setup
 if [ -z "$GITHUB_OUTPUT" ]; then
   export GITHUB_OUTPUT="/tmp/github_output.txt"
   echo "Running locally, writing outputs to $GITHUB_OUTPUT"
@@ -29,9 +29,12 @@ elif [[ "$commit_msg" == fix:* ]]; then
     patch=$((patch+1))
 else
     write_output "skip=true"
+    echo "Skipping version bump"
     exit 0
 fi
 
 new_tag="v$major.$minor.$patch"
 write_output "new_tag=$new_tag"
 write_output "skip=false"
+
+echo "New tag is: $new_tag"
