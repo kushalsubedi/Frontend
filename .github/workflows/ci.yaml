@@ -30,7 +30,6 @@ jobs:
         id: vars
         run: echo "sha3=$(echo $GITHUB_SHA | cut -c1-3)" >> $GITHUB_OUTPUT
 
-
       - name: Set environment name
         id: envname
         run: |
