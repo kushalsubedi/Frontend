@@ -1,0 +1,14 @@
+name: "Semantic Version Bump"
+description: "Bump version based on commit messages"
+outputs:
+  new_tag:
+    description: "The new semver tag"
+    value: ${{ steps.bump-tag.outputs.new_tag }}
+  skip:
+    description: "Whether to skip the build"
+    value: ${{ steps.bump-tag.outputs.skip }}
+runs:
+  using: "composite"
+  steps:
+    - run: bash ${{ github.action_path }}/bump.sh
+      shell: bash

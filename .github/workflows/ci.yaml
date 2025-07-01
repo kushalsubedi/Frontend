@@ -17,18 +17,27 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Fetch full Git history (for tags)
+        run: git fetch --tags --prune --unshallow || true
+
+      - name: Bump version based on commit
+        id: bump
+        uses: ./.github/actions/version-bump
+
+      - name: Stop if commit is not feat/fix
+        if: steps.bump.outputs.skip == 'true'
+        run: echo "Skipping build - non-semver commit"
+
       - name: Set up Docker Buildx
+        if: steps.bump.outputs.skip != 'true'
         uses: docker/setup-buildx-action@v3
 
       - name: Log in to DockerHub
+        if: steps.bump.outputs.skip != 'true'
         uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKER_HUB_USERNAME }}
           password: ${{ secrets.DOCKER_HUB_PAT }}
-
-      - name: Get short SHA
-        id: vars
-        run: echo "sha3=$(echo $GITHUB_SHA | cut -c1-3)" >> $GITHUB_OUTPUT
 
       - name: Set environment name
         id: envname
@@ -39,23 +48,23 @@ jobs:
             echo "env=development" >> $GITHUB_OUTPUT
           fi
 
-      - name: Set Docker tags
-        id: tags
-        run: |
-          if [[ "${GITHUB_REF}" == "refs/heads/main" ]]; then
-            echo "tag=prodv${{ steps.vars.outputs.sha3 }}" >> $GITHUB_OUTPUT
-          else
-            echo "tag=dev${{ steps.vars.outputs.sha3 }}" >> $GITHUB_OUTPUT
-          fi
-
       - name: Print Environment
         run: echo "Using environment $ENVIRONMENT"
         env:
           ENVIRONMENT: ${{ steps.envname.outputs.env }}
 
       - name: Build and push Docker image
+        if: steps.bump.outputs.skip != 'true'
         uses: docker/build-push-action@v5
         with:
           context: .
           push: true
-          tags: ${{ secrets.DOCKER_HUB_USERNAME }}/frontend:${{ steps.tags.outputs.tag }}
+          tags: ${{ secrets.DOCKER_HUB_USERNAME }}/frontend:${{ steps.bump.outputs.new_tag }}
+
+      - name: Tag and push Git tag
+        if: steps.bump.outputs.skip != 'true'
+        run: |
+          git config user.name "github-actions"
+          git config user.email "actions@github.com"
+          git tag ${{ steps.bump.outputs.new_tag }}
+          git push origin ${{ steps.bump.outputs.new_tag }}
