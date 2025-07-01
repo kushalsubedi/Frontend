@@ -24,10 +24,6 @@ jobs:
         id: bump
         uses: ./.github/actions/version-bump
 
-      - name: Stop if commit is not feat/fix
-        if: steps.bump.outputs.skip == 'true'
-        run: echo "Skipping build - non-semver commit"
-
       - name: Set up Docker Buildx
         if: steps.bump.outputs.skip != 'true'
         uses: docker/setup-buildx-action@v3
