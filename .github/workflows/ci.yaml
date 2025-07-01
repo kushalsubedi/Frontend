@@ -49,7 +49,7 @@ jobs:
           fi
 
       - name: Print Environment
-        run: echo "Using environment: $ENVIRONMENT"
+        run: echo "Using environment $ENVIRONMENT"
         env:
           ENVIRONMENT: ${{ steps.envname.outputs.env }}
 
