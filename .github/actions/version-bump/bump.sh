@@ -22,6 +22,10 @@ elif [[ "$commit_msg" == fix:* ]]; then
     patch=$((patch+1))
 else
     echo "skip=true" >> "$GITHUB_OUTPUT"
+    echo "$GITHUB_OUTPUT"
+    echo "Version is updated ------"
+    echo "HIIIIIIIIIIIIIIIIIIIIIIIIIIIII"
+
     exit 0
 fi
 
