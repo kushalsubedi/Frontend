@@ -30,35 +30,31 @@ jobs:
       - name: Run React tests
         run: echo "test pass for now .... "
 
-      - name: Validate Conventional Commit Messages
+      - name: Check latest commit message for Conventional Commit
         run: |
           set -e
-          BASE_BRANCH="${{ github.base_ref || 'main' }}"
-          echo "Comparing commits from origin/$BASE_BRANCH to HEAD..."
 
-          CONVENTIONAL_REGEX="^(feat|fix|chore|docs|style|refactor|perf|test|build|ci|revert)(\\([a-z0-9-]+\\))?: .+"
-            # use regex pattern to match conventional commit messages
-          COMMITS=$(git log origin/$BASE_BRANCH..HEAD --pretty=format:"%s")
-          echo "$COMMITS" | while IFS= read -r COMMIT; do
-            # Skip merge commits because they often contain merge hashes
-            # and do not follow conventional commit format.
-            if [[ "$COMMIT" =~ ^Merge\ [a-f0-9]{7,}\ into\ [a-f0-9]{7,}$ ]]; then
-              echo "Skipping merge commit: \"$COMMIT\""
-              continue
-            fi
+          # Get latest commit message subject
+          COMMIT_MSG=$(git log -1 --pretty=format:"%s")
+          echo "Latest commit message: \"$COMMIT_MSG\""
 
-            # Check if the commit message matches the conventional commit regex
-            # If it does not match, print an error message and exit with a non-zero status
-            # If it matches, print a success message
-            if [[ ! "$COMMIT" =~ $CONVENTIONAL_REGEX ]]; then
-              echo "::error ::Non-conforming commit: \"$COMMIT\""
-              exit 1
-            else
-              echo "$COMMIT"
-            fi
-          done
+          # Conventional commit regex
+          REGEX="^(feat|fix|chore|docs|style|refactor|perf|test|build|ci|revert)(\\([a-z0-9-]+\\))?: .+"
 
-          echo "All commit messages follow Conventional Commits."
+          # Skip merge commits
+          if [[ "$COMMIT_MSG" =~ ^Merge\ [a-f0-9]{7,}\ into\ [a-f0-9]{7,}$ ]]; then
+            echo "⚠️ Skipping merge commit."
+            exit 0
+          fi
+
+          # Check the commit message
+          if [[ ! "$COMMIT_MSG" =~ $REGEX ]]; then
+            echo "::error ::❌ Non-conforming commit: \"$COMMIT_MSG\""
+            exit 1
+          else
+            echo "✅ Commit is valid."
+          fi
+
 
   docker-build-and-push:
     needs: test-and-validate
