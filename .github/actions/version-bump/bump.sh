@@ -14,7 +14,7 @@ write_output() {
 
 latest_tag=$(git describe --tags `git rev-list --tags --max-count=1` 2>/dev/null || echo "v0.0.0")
 commit_msg=$(git log -1 --pretty=%s)
-echo "HI"
+echo "HI "
 version=${latest_tag#v}
 major=$(echo "$version" | cut -d. -f1)
 minor=$(echo "$version" | cut -d. -f2)
