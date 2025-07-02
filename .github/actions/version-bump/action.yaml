@@ -1,26 +1,16 @@
 name: Semantic Versioning
 description: Generates a semantic version based on commit messages
-inputs:
-  working-directory:
-    description: Directory to run versioning in
-    required: false
-    default: .
 
 outputs:
   new_tag:
     description: "Generated semantic version tag"
   skip:
-    description: "Whether versioning was skipped"
+    description: "Whether to skip tagging"
 
 runs:
   using: "composite"
   steps:
-    - name: Run versioning script
-      shell: bash
-      run: |
-        cd ${{ inputs.working-directory }}
+    - run: |
         bash ${{ github.action_path }}/bump.sh
-        source /tmp/github_output.txt
-        echo "new_tag=$new_tag" >> $GITHUB_OUTPUT
-        echo "skip=$skip" >> $GITHUB_OUTPUT
+      shell: bash
 
