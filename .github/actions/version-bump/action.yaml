@@ -1,14 +1,26 @@
-name: "Semantic Version Bump"
-description: "Bump version based on commit messages"
+name: Semantic Versioning
+description: Generates a semantic version based on commit messages
+inputs:
+  working-directory:
+    description: Directory to run versioning in
+    required: false
+    default: .
+
 outputs:
   new_tag:
-    description: "The new semver tag"
-    value: ${{ steps.bump-tag.outputs.new_tag }}
+    description: "Generated semantic version tag"
   skip:
-    description: "Whether to skip the build"
-    value: ${{ steps.bump-tag.outputs.skip }}
+    description: "Whether versioning was skipped"
+
 runs:
   using: "composite"
   steps:
-    - run: bash ${{ github.action_path }}/bump.sh
+    - name: Run versioning script
       shell: bash
+      run: |
+        cd ${{ inputs.working-directory }}
+        bash ${{ github.action_path }}/bump.sh
+        source /tmp/github_output.txt
+        echo "new_tag=$new_tag" >> $GITHUB_OUTPUT
+        echo "skip=$skip" >> $GITHUB_OUTPUT
+
