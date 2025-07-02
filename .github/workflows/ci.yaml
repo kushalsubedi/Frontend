@@ -30,8 +30,6 @@ jobs:
       - name: Run React tests
         run: echo "test pass for now .... "
 
-
-
       - name: Check latest commit message for Conventional Commit
         run: |
           set -e
@@ -83,7 +81,7 @@ jobs:
         if: steps.version.outputs.skip != 'true'
         run: |
           git tag ${{ steps.version.outputs.new_tag }}
-          git push origin ${{ steps.version.outputs.new_tag }
+          git push origin ${{ steps.version.outputs.new_tag }}
 
       - name: Get short SHA
         id: vars
