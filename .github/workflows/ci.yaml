@@ -11,7 +11,7 @@ on:
 
 jobs:
   docker-build-and-push:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu1
 
     steps:
       - name: Checkout code
