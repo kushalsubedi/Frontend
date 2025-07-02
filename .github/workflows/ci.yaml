@@ -75,7 +75,7 @@ jobs:
 
       - name: Run Semantic Versioning
         id: version
-        uses: ./.github/actions/semantic-version
+        uses: ./.github/actions/version-bump
 
       - name: Create tag if not skipped
         if: steps.version.outputs.skip != 'true'
